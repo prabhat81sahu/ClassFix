@@ -133,6 +133,7 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script>
         function toggleAdminCode() {
             const role = document.getElementById('roleSelect').value;
@@ -146,10 +147,7 @@
             const data = Object.fromEntries(formData.entries());
 
             try {
-                // Dynamically use localhost:3000 if opened via file:// or Live Server
-                const apiBase = (window.location.protocol === 'file:' || (window.location.port !== '3000' && window.location.hostname === '127.0.0.1')) ? 'http://localhost:3000' : '';
-
-                const res = await fetch(`${apiBase}/api/auth/register`, {
+                const res = await fetch(`${API_BASE}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
