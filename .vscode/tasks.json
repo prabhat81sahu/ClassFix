@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "sqlproj: Build Classfix",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"d:/New folder/Classfix/Classfix.sqlproj"
+			],
+			"problemMatcher": "$sqlproj-problem-matcher",
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "Builds the Classfix SQL project"
+		}
+	]
+}

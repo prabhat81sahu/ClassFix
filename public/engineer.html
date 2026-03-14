@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Engineer Dashboard - ClassFix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #f4f6f9; 
+            font-family: 'Poppins', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+        }
+        .navbar { background: #2c3e50; background: linear-gradient(to right, #2c3e50, #3498db); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .status-pending { color: #dc3545; font-weight: 600; background: #ffe6e6; padding: 6px 14px; border-radius: 30px; font-size: 0.85em; display: inline-block; }
+        .status-progress { color: #b08d00; font-weight: 600; background: #fff8d6; padding: 6px 14px; border-radius: 30px; font-size: 0.85em; display: inline-block; }
+        .status-resolved { color: #198754; font-weight: 600; background: #d1e7dd; padding: 6px 14px; border-radius: 30px; font-size: 0.85em; display: inline-block; }
+        .card { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-radius: 16px; margin-bottom: 25px; transition: 0.3s; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); }
+        .stat-card { transition: all 0.3s ease; border-left-width: 6px !important; }
+        .stat-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .card-header { background: transparent; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: 700; font-size: 1.2em; padding: 20px; color: #2c3e50; }
+        .hero-banner { background: linear-gradient(135deg, #2c3e50, #4ca1af); color: white; border-radius: 20px; padding: 40px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 20px 40px rgba(0,0,0,0.15); transition: 0.3s; }
+        .hero-banner:hover { transform: translateY(-3px); box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+        .hero-banner .hero-content { max-width: 65%; }
+        .hero-banner .hero-img { width: 140px; height: 140px; object-fit: cover; border-radius: 50%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3); background: white; transition: 0.3s; }
+        .hero-banner .hero-img:hover { transform: scale(1.05) rotate(5deg); }
+        .nav-tabs { border-bottom: none; gap: 5px; }
+        .nav-tabs .nav-link { color: #6c757d; border: none; border-radius: 8px 8px 0 0; font-weight: 500; padding: 12px 20px; transition: 0.3s; }
+        .nav-tabs .nav-link:hover { color: #2c3e50; background: rgba(44, 62, 80, 0.05); }
+        .nav-tabs .nav-link.active { font-weight: 600; color: #2c3e50; border-bottom: 3px solid #2c3e50; background: transparent; }
+        .table { margin-bottom: 0; }
+        .table th { border-bottom: none; color: #6c757d; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; padding: 15px; }
+        .table td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f8f9fa; }
+        .table-hover tbody tr:hover { background-color: #f8faff; transform: scale(1.002); box-shadow: inset 4px 0 0 #3498db; }
+        .form-control:focus, .form-select:focus { border-color: #3498db; box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25); }
+        @media (max-width: 768px) { .hero-banner { flex-direction: column; text-align: center; } .hero-banner .hero-img { margin-top: 25px; } .hero-banner .hero-content { max-width: 100%; } }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark px-4 mb-4 shadow-sm">
+    <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+        <img src="logo.jpg" alt="ClassFix Logo" style="width: 28px; height: 28px; margin-right: 10px; border-radius: 6px; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        Engineer Portal
+    </a>
+    <div>
+        <a href="profile.html" class="btn btn-outline-light btn-sm"><i class="bi bi-person-circle"></i> Profile</a>
+        <button onclick="logout()" class="btn btn-outline-light btn-sm ms-2"><i class="bi bi-box-arrow-right"></i> Logout</button>
+    </div>
+</nav>
+
+<div class="container-fluid px-4">
+    
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+        <div class="hero-content">
+            <h2 class="fw-bold mb-2">Engineer Service Center</h2>
+            <p class="mb-0 text-white-50">Manage assigned tasks, resolve campus issues promptly, and maintain infrastructure seamlessly.</p>
+        </div>
+        <img src="logo.jpg" alt="Class Fix Logo" class="hero-img">
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card p-3 border-start border-5 border-danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="text-muted">Pending Tasks</h6><h2 id="countPending">0</h2></div>
+                    <div class="fs-1 text-danger"><i class="bi bi-exclamation-octagon"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card p-3 border-start border-5 border-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="text-muted">In Progress</h6><h2 id="countProgress">0</h2></div>
+                    <div class="fs-1 text-warning"><i class="bi bi-hourglass-split"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card p-3 border-start border-5 border-success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="text-muted">Resolved</h6><h2 id="countResolved">0</h2></div>
+                    <div class="fs-1 text-success"><i class="bi bi-check2-circle"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Header & AI Button -->
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+        <h4 class="fw-bold text-secondary mb-0">Assigned Complaints</h4>
+        <button class="btn btn-warning fw-bold shadow-sm" onclick="generateAISummary()">
+            <i class="bi bi-robot"></i> Generate AI Insights
+        </button>
+    </div>
+
+    <!-- Complaints Table -->
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="engineerTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#hostelTab">Hostel Complaints</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#campusTab">Campus Complaints</button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+                
+                <!-- Hostel Tab -->
+                <div class="tab-pane fade show active" id="hostelTab">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Block & Room</th>
+                                    <th>Issue</th>
+                                    <th>Description</th>
+                                    <th>Reported By</th>
+                                    <th>Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Image</th>
+                                    <th>AI Check</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hostelTableBody">
+                                <!-- Data loads here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Campus Tab -->
+                <div class="tab-pane fade" id="campusTab">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Room / Lab</th>
+                                    <th>Issue</th>
+                                    <th>Description</th>
+                                    <th>Reported By</th>
+                                    <th>Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Image</th>
+                                    <th>AI Check</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="campusTableBody">
+                                <!-- Data loads here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Updating Status -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Ticket Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalComplaintId">
+                <div id="modalAiAnalysis" style="display:none;"></div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Current Status:</label>
+                    <select id="modalStatus" class="form-select">
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Priority:</label>
+                    <select id="modalPriority" class="form-select">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <div id="commentSection" style="display:none;" class="mb-3">
+                    <label class="form-label fw-bold">Resolution Note:</label>
+                    <textarea id="modalComment" class="form-control" rows="3" placeholder="Describe how the issue was fixed..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveStatus()">Save Updates</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Summary Modal -->
+<div class="modal fade" id="aiSummaryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="bi bi-robot"></i> AI Facility Insights</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="aiSummaryBody">
+                <div class="text-center py-5" id="aiLoadingSpinner">
+                    <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+                    <h5>Analyzing campus data...</h5>
+                    <p class="text-muted">Gemini is grouping complaints and summarizing issues.</p>
+                </div>
+                <div id="aiSummaryContent" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API_BASE = (window.location.protocol === 'file:' || (window.location.port !== '3000' && window.location.hostname === '127.0.0.1')) ? 'http://localhost:3000' : '';
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    const domain = localStorage.getItem('domain') || 'All'; // Store domain for UI logic
+    const aiModal = new bootstrap.Modal(document.getElementById('aiSummaryModal'));
+
+    if (!token || role !== 'Engineer') {
+        window.location.href = 'login.html';
+    }
+
+    let complaintsData = [];
+    const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+
+    async function fetchStats() {
+        try {
+            const res = await fetch(API_BASE + '/api/complaints/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!res.ok) throw new Error('Failed to fetch');
+            
+            const stats = await res.json();
+            
+            const pending = stats.find(s => s._id === 'Pending')?.count || 0;
+            const inProgress = stats.find(s => s._id === 'In Progress')?.count || 0;
+            const resolved = stats.find(s => s._id === 'Resolved')?.count || 0;
+
+            document.getElementById('countPending').innerText = pending;
+            document.getElementById('countProgress').innerText = inProgress;
+            document.getElementById('countResolved').innerText = resolved;
+        } catch (err) {
+            console.error("Error fetching stats:", err);
+        }
+    }
+
+    async function loadComplaints() {
+        try {
+            const res = await fetch(API_BASE + '/api/complaints', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!res.ok) throw new Error('Failed to fetch');
+            
+            complaintsData = await res.json();
+            
+            // UI Enforcement: Hide tabs based on domain
+            const userDomain = localStorage.getItem('domain');
+            const hostelTabBtn = document.querySelector('[data-bs-target="#hostelTab"]');
+            const campusTabBtn = document.querySelector('[data-bs-target="#campusTab"]');
+            
+            if (userDomain === 'Hostel') {
+                if (campusTabBtn) campusTabBtn.parentElement.style.display = 'none';
+                if (hostelTabBtn) {
+                    hostelTabBtn.click(); // Ensure active
+                }
+            } else if (userDomain === 'Campus') {
+                if (hostelTabBtn) hostelTabBtn.parentElement.style.display = 'none';
+                if (campusTabBtn) {
+                    campusTabBtn.click(); // Ensure active
+                }
+            }
+
+            renderTable();
+            fetchStats(); // Call fetchStats here
+
+            // Auto-trigger AI Insights once per session
+            if (!sessionStorage.getItem('aiInsightsShown')) {
+                sessionStorage.setItem('aiInsightsShown', 'true');
+                // Small delay so they see the dashboard load first
+                setTimeout(generateAISummary, 1500);
+            }
+
+        } catch (err) {
+            console.error("Error:", err);
+        }
+    }
+
+    function renderTable() {
+        const hostelBody = document.getElementById('hostelTableBody');
+        const campusBody = document.getElementById('campusTableBody');
+
+        // Grouping logic
+        const groupedComplaints = {};
+        complaintsData.forEach(c => {
+            const key = `${c.roomNumber}|${c.issueType}|${c.status}`;
+            if (!groupedComplaints[key]) {
+                groupedComplaints[key] = {
+                    ...c,
+                    ids: [c.id],
+                    studentNames: [c.studentName],
+                    count: 1
+                };
+            } else {
+                groupedComplaints[key].ids.push(c.id);
+                if (!groupedComplaints[key].studentNames.includes(c.studentName)) {
+                    groupedComplaints[key].studentNames.push(c.studentName);
+                }
+                groupedComplaints[key].count++;
+                
+                // Keep the highest priority
+                if (c.priority === 'High' && groupedComplaints[key].priority !== 'High') {
+                    groupedComplaints[key].priority = 'High';
+                } else if (c.priority === 'Medium' && groupedComplaints[key].priority === 'Low') {
+                    groupedComplaints[key].priority = 'Medium';
+                }
+            }
+        });
+
+        const groupedArray = Object.values(groupedComplaints);
+
+        const renderRows = (complaints) => complaints.map(c => {
+            let aiBadge = `<span class="badge bg-secondary" title="Not Checked">N/A</span>`;
+            if (c.aiIsRelated === true || String(c.aiIsRelated).toLowerCase() === 'true') {
+                aiBadge = `<span class="badge bg-success" title="${c.aiSummary.replace(/"/g, '&quot;')}"><i class="bi bi-check-circle"></i> Verified</span>`;
+            } else if (c.aiIsRelated === false || String(c.aiIsRelated).toLowerCase() === 'false') {
+                aiBadge = `<span class="badge bg-danger" title="${c.aiSummary.replace(/"/g, '&quot;')}"><i class="bi bi-exclamation-triangle"></i> Flagged</span>`;
+            }
+
+            const countBadge = c.count > 1 ? `<span class="badge bg-danger rounded-pill ms-2 shadow-sm">${c.count} Reports</span>` : '';
+            const studentDisplay = c.count > 1 
+                ? `<span data-bs-toggle="tooltip" title="${c.studentNames.join(', ')}">Multiple Students </span><i class="bi bi-info-circle text-muted small"></i>`
+                : c.studentName;
+
+            // Notice we pass the first id for Modal backward compatibility, but we store stringified IDs in data-ids
+            return `
+            <tr data-ids='${JSON.stringify(c.ids)}'>
+                <td class="fw-bold">${c.roomNumber}</td>
+                <td>${c.issueType} ${countBadge}</td>
+                <td><small class="text-muted d-block text-truncate" style="max-width: 200px;">${c.description}</small></td>
+                <td>${studentDisplay}</td>
+                <td><small>${new Date(c.createdAt).toLocaleDateString()}</small></td>
+                <td><span class="badge ${getPriorityClass(c.priority)}">${c.priority}</span></td>
+                <td><span class="${getStatusClass(c.status)}">${c.status}</span></td>
+                <td>${c.imageUrl ? `<a href="${c.imageUrl}" target="_blank" class="btn btn-sm btn-light border">View</a>` : '-'}</td>
+                <td>${aiBadge}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="openModal('${c.ids.join(',')}')">
+                        <i class="bi bi-pencil-square"></i> Update
+                    </button>
+                </td>
+            </tr>
+        `}).join('');
+
+        const hostelComplaints = groupedArray.filter(c => c.category === 'Hostel');
+        const campusComplaints = groupedArray.filter(c => c.category !== 'Hostel');
+
+        hostelBody.innerHTML = renderRows(hostelComplaints);
+        campusBody.innerHTML = renderRows(campusComplaints);
+        
+        // Initialize tooltips for the "Multiple Students" text
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    }
+
+    function getStatusClass(status) {
+        if(status === 'Pending') return 'status-pending';
+        if(status === 'In Progress') return 'status-progress';
+        return 'status-resolved';
+    }
+
+    function getPriorityClass(priority) {
+        if(priority === 'High') return 'bg-danger';
+        if(priority === 'Medium') return 'bg-warning text-dark';
+        return 'bg-info text-dark';
+    }
+
+    // updateStats is now replaced by fetchStats
+    // function updateStats() {
+    //     document.getElementById('countPending').innerText = complaintsData.filter(c => c.status === 'Pending').length;
+    //     document.getElementById('countProgress').innerText = complaintsData.filter(c => c.status === 'In Progress').length;
+    //     document.getElementById('countResolved').innerText = complaintsData.filter(c => c.status === 'Resolved').length;
+    // }
+
+    window.openModal = function(idsStr) {
+        const ids = idsStr.split(',');
+        // For UI display, just use the first complaint's data since they are identical
+        const c = complaintsData.find(comp => comp.id === ids[0]);
+        if (!c) return;
+        
+        document.getElementById('modalComplaintId').value = idsStr; // Store the comma separated list of IDs
+        document.getElementById('modalStatus').value = c.status;
+        document.getElementById('modalPriority').value = c.priority || 'Medium';
+        document.getElementById('modalComment').value = '';
+        
+        const aiDiv = document.getElementById('modalAiAnalysis');
+        if (c.aiIsRelated === true || String(c.aiIsRelated).toLowerCase() === 'true') {
+            aiDiv.style.display = 'block';
+            aiDiv.className = 'alert alert-success fs-6 py-2 mb-3 shadow-sm';
+            aiDiv.innerHTML = `<strong><i class="bi bi-robot"></i> AI Verified:</strong> ${c.aiSummary}`;
+        } else if (c.aiIsRelated === false || String(c.aiIsRelated).toLowerCase() === 'false') {
+            aiDiv.style.display = 'block';
+            aiDiv.className = 'alert alert-danger fs-6 py-2 mb-3 shadow-sm';
+            aiDiv.innerHTML = `<strong><i class="bi bi-robot"></i> AI Flagged:</strong> ${c.aiSummary}`;
+        } else {
+            aiDiv.style.display = 'none';
+        }
+
+        toggleCommentBox();
+        statusModal.show();
+    }
+
+    document.getElementById('modalStatus').addEventListener('change', toggleCommentBox);
+    function toggleCommentBox() {
+        const status = document.getElementById('modalStatus').value;
+        document.getElementById('commentSection').style.display = (status === 'Resolved') ? 'block' : 'none';
+    }
+
+    async function saveStatus() {
+        const idsStr = document.getElementById('modalComplaintId').value;
+        const ids = idsStr.split(',');
+        
+        const status = document.getElementById('modalStatus').value;
+        const priority = document.getElementById('modalPriority').value;
+        const comment = document.getElementById('modalComment').value;
+
+        // If it's just one ID, use the existing single-update route
+        if (ids.length === 1) {
+            await fetch(`${API_BASE}/api/complaints/${ids[0]}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+                body: JSON.stringify({ status, priority, resolutionComment: comment })
+            });
+        } else {
+            // Otherwise use the new batch update route
+            await fetch(API_BASE + `/api/complaints/batch`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+                body: JSON.stringify({ ids, status, priority, resolutionComment: comment })
+            });
+        }
+        
+        statusModal.hide();
+        loadComplaints();
+    }
+    
+    async function generateAISummary() {
+        aiModal.show();
+        document.getElementById('aiLoadingSpinner').style.display = 'block';
+        document.getElementById('aiSummaryContent').style.display = 'none';
+
+        try {
+            const res = await fetch(API_BASE + '/api/complaints/ai-summary', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                document.getElementById('aiSummaryContent').innerHTML = data.summaryHtml;
+            } else {
+                document.getElementById('aiSummaryContent').innerHTML = `<div class="alert alert-danger">${data.error || 'Failed to generate summary.'}</div>`;
+            }
+        } catch (error) {
+            document.getElementById('aiSummaryContent').innerHTML = `<div class="alert alert-danger">Network error occurred.</div>`;
+        } finally {
+            document.getElementById('aiLoadingSpinner').style.display = 'none';
+            document.getElementById('aiSummaryContent').style.display = 'block';
+        }
+    }
+
+    function logout() { localStorage.clear(); sessionStorage.clear(); window.location.href = 'index.html'; }
+    loadComplaints();
+</script>
+
+<!-- Footer -->
+<footer class="text-center py-4 mt-auto text-muted" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.3);">
+    <p class="mb-0 fw-semibold">&copy; 2026 ClassFix. All Rights Reserved.</p>
+</footer>
+</body>
+</html>

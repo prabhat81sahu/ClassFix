@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ClassFix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background: linear-gradient(-45deg, #FF9A9E, #FECFEF, #A1C4FD, #C2E9FB); /* Vibrant soft gradient */
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex; flex-direction: column; min-height: 100vh; margin: 0; font-family: 'Poppins', sans-serif; 
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .split-container { 
+            display: flex; width: 100%; max-width: 900px; 
+            background: rgba(255, 255, 255, 0.4); /* Glassmorphism */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px; 
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1); 
+            overflow: hidden; margin: auto; 
+        }
+        .graphic-side { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
+        .graphic-side img { max-width: 80%; width: 300px; height: auto; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .graphic-side h2 { font-weight: 600; color: #333; margin-bottom: 10px; }
+        .graphic-side p { color: #666; font-size: 0.95rem; }
+        .form-side { flex: 1; padding: 50px 40px; display: flex; flex-direction: column; justify-content: center; background: rgba(255, 255, 255, 0.7); }
+        .form-control:focus, .form-select:focus { border-color: #764ba2; box-shadow: 0 0 0 0.25rem rgba(118, 75, 162, 0.25); background: white;}
+        .form-control { background: rgba(255,255,255,0.7); }
+        .btn-primary { background: linear-gradient(to right, #00c6ff 0%, #0072ff 100%); border: none; transition: 0.3s; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* Shake Animation for Invalid Login */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+        .shake-animation {
+            animation: shake 0.4s ease-in-out;
+        }
+        
+        /* Moving Background Elements */
+        .shapes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: -1; pointer-events: none; }
+        .shape { position: absolute; background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); bottom: -150px; }
+        .shape-circle { border-radius: 50%; animation: floatUpCircle 15s linear infinite; }
+        .shape-square { border-radius: 10%; animation: floatUpSquare 15s linear infinite; }
+        .shape-triangle { width: 0; height: 0; border-left: 50px solid transparent; border-right: 50px solid transparent; border-bottom: 80px solid rgba(255,255,255,0.15); background: transparent; backdrop-filter: none; animation: floatUpSquare 15s linear infinite; border-top: none;}
+        
+        .shape:nth-child(1) { left: 10%; width: 80px; height: 80px; animation-delay: 0s; animation-duration: 12s; }
+        .shape:nth-child(2) { left: 30%; width: 120px; height: 120px; animation-delay: 2s; animation-duration: 15s; }
+        .shape:nth-child(3) { left: 60%; width: 60px; height: 60px; animation-delay: 4s; animation-duration: 10s; }
+        .shape:nth-child(4) { left: 80%; width: 150px; height: 150px; animation-delay: 1s; animation-duration: 18s; }
+        .shape:nth-child(5) { left: 45%; width: 90px; height: 90px; animation-delay: 5s; animation-duration: 14s; }
+        .shape:nth-child(6) { left: 20%; animation-delay: 3s; animation-duration: 16s; } /* Triangle */
+        .shape:nth-child(7) { left: 75%; width: 40px; height: 40px; animation-delay: 6s; animation-duration: 9s; }
+        .shape:nth-child(8) { left: 5%; width: 110px; height: 110px; animation-delay: 7s; animation-duration: 20s; }
+        .shape:nth-child(9) { left: 90%; animation-delay: 2s; animation-duration: 12s; } /* Triangle */
+        
+        @keyframes floatUpCircle { 0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 0; } 100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 50%; } }
+        @keyframes floatUpSquare { 0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 50%; } 100% { transform: translateY(-1000px) rotate(360deg); opacity: 0; border-radius: 10%; } }
+        
+        @media (max-width: 768px) { .split-container { flex-direction: column; } .graphic-side { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="shapes">
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-square"></div>
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-square"></div>
+        <div class="shape shape-triangle"></div>
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-square"></div>
+        <div class="shape shape-triangle"></div>
+    </div>
+    <div class="split-container">
+        <div class="graphic-side">
+            <img src="logo.jpg" alt="Class Fix Logo">
+            <h2>Welcome Back</h2>
+            <p>Sign in to continue to ClassFix</p>
+        </div>
+        <div class="form-side">
+            <h3 class="text-center fw-bold mb-4">Sign In</h3>
+            
+            <!-- Error Message Alert Box -->
+            <div id="loginAlert" class="alert alert-danger" style="display: none; padding: 10px; font-size: 0.9rem;" role="alert"></div>
+
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label text-secondary fw-semibold">Username</label>
+                    <input type="text" name="username" class="form-control" required autofocus>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label text-secondary fw-semibold">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold text-white shadow-sm">Login</button>
+            </form>
+            <div class="text-center mt-4">
+                <small class="text-muted">Don't have an account? <a href="register.html" class="text-decoration-none fw-bold" style="color:#0072ff">Register</a></small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                // Dynamically use localhost:3000 if opened via file:// or Live Server
+                const apiBase = (window.location.protocol === 'file:' || (window.location.port !== '3000' && window.location.hostname === '127.0.0.1')) ? 'http://localhost:3000' : '';
+                
+                const res = await fetch(`${apiBase}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                
+                if (res.ok) {
+                    // Save session data
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('role', result.role);
+                    localStorage.setItem('username', result.username);
+                    if(result.domain) localStorage.setItem('domain', result.domain);
+                    
+                    // Redirect based on role
+                    if (result.role === 'Student') window.location.href = 'student.html';
+                    else if (result.role === 'Engineer') window.location.href = 'engineer.html';
+                    else if (result.role === 'Admin') window.location.href = 'admin.html';
+                } else {
+                    showErrorAndShake(result.message || 'Login failed. Please check your credentials.');
+                }
+            } catch (err) { 
+                showErrorAndShake('Error connecting to Server (' + err.message + '). Ensure the backend is running.');
+                console.error(err); 
+            }
+        });
+
+        function showErrorAndShake(message) {
+            // Show the error message inside the box
+            const alertBox = document.getElementById('loginAlert');
+            alertBox.textContent = message;
+            alertBox.style.display = 'block';
+
+            // Find the container and apply the shake animation
+            const container = document.querySelector('.split-container');
+            container.classList.remove('shake-animation'); // Reset in case it already exists
+            void container.offsetWidth; // Trigger reflow to restart animation
+            container.classList.add('shake-animation');
+
+            // Optional: Hide the error message after a few seconds
+            setTimeout(() => {
+                alertBox.style.display = 'none';
+            }, 4000);
+        }
+    </script>
+    
+    <!-- Footer -->
+    <footer class="text-center py-3 mt-auto text-muted" style="width: 100%; background: rgba(255,255,255,0.3); backdrop-filter: blur(5px);">
+        <p class="mb-0 fw-semibold fs-6">&copy; 2026 ClassFix. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>

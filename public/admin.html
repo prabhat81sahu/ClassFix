@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Portal - ClassFix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #f4f6f9; 
+            font-family: 'Poppins', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+        }
+        .navbar { background: #1f4037; background: linear-gradient(to right, #1f4037, #99f2c8); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .stat-card { border: none; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.3s ease; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-left-width: 6px !important; }
+        .stat-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 25px; transition: 0.3s; }
+        .card-header { background: transparent; border-bottom: 1px solid rgba(0,0,0,0.05); padding-top: 15px; }
+        .status-badge { padding: 6px 14px; border-radius: 30px; font-size: 0.85em; font-weight: 600; display: inline-block; }
+        .bg-pending { background-color: #ffe6e6; color: #dc3545; }
+        .bg-resolved { background-color: #d1e7dd; color: #198754; }
+        .bg-progress { background-color: #fff8d6; color: #b08d00; }
+        .nav-tabs { border-bottom: none; gap: 5px; }
+        .nav-tabs .nav-link { color: #6c757d; border: none; border-radius: 8px 8px 0 0; font-weight: 500; padding: 12px 20px; transition: 0.3s; }
+        .nav-tabs .nav-link:hover { color: #1f4037; background: rgba(31, 64, 55, 0.05); }
+        .nav-tabs .nav-link.active { font-weight: 600; color: #1f4037; border-bottom: 3px solid #1f4037; background: transparent; }
+        .hero-banner { background: linear-gradient(135deg, #1f4037, #99f2c8); color: white; border-radius: 20px; padding: 40px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 20px 40px rgba(0,0,0,0.15); transition: 0.3s; }
+        .hero-banner:hover { transform: translateY(-3px); box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+        .hero-banner .hero-content { max-width: 65%; }
+        .hero-banner .hero-img { width: 140px; height: 140px; object-fit: cover; border-radius: 50%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3); background: white; transition: 0.3s; }
+        .hero-banner .hero-img:hover { transform: scale(1.05) rotate(5deg); }
+        .table { margin-bottom: 0; }
+        .table th { border-bottom: none; color: #6c757d; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; padding: 15px; }
+        .table td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f8f9fa; }
+        .table-hover tbody tr:hover { background-color: #f8faff; transform: scale(1.002); box-shadow: inset 4px 0 0 #1f4037; }
+        @media (max-width: 768px) { .hero-banner { flex-direction: column; text-align: center; } .hero-banner .hero-img { margin-top: 25px; } .hero-banner .hero-content { max-width: 100%; } }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark px-4 mb-4 shadow-sm">
+    <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+        <img src="logo.jpg" alt="ClassFix Logo" style="width: 28px; height: 28px; margin-right: 10px; border-radius: 6px; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        Admin Portal
+    </a>
+    <div>
+        <a href="profile.html" class="btn btn-outline-light btn-sm"><i class="bi bi-person-circle"></i> Profile</a>
+        <button onclick="logout()" class="btn btn-outline-light btn-sm ms-2"><i class="bi bi-box-arrow-right"></i> Logout</button>
+    </div>
+</nav>
+
+<div class="container-fluid px-4">
+    
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+        <div class="hero-content">
+            <h2 class="fw-bold mb-2">System Administration</h2>
+            <p class="mb-0 text-white-50">Oversee entire campus operations, analyze reports, and manage all users and engineers.</p>
+        </div>
+        <img src="logo.jpg" alt="Class Fix Logo" class="hero-img">
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card p-3 border-start border-5 border-primary">
+                <h6 class="text-muted">Total Users</h6>
+                <h2 id="totalUsers">0</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card p-3 border-start border-5 border-info">
+                <h6 class="text-muted">Total Complaints</h6>
+                <h2 id="totalComplaints">0</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card p-3 border-start border-5 border-success">
+                <h6 class="text-muted">Solved by Engineers</h6>
+                <h2 id="totalSolved">0</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card p-3 border-start border-5 border-danger">
+                <h6 class="text-muted">Pending Issues</h6>
+                <h2 id="totalPending">0</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Header & AI Button -->
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+        <h4 class="fw-bold text-secondary mb-0">Platform Overview</h4>
+        <button class="btn btn-warning fw-bold shadow-sm" onclick="generateAISummary()">
+            <i class="bi bi-robot"></i> Generate AI Insights
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="adminTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#hostelTab">Hostel</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#campusTab">Campus</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#engineersTab">Engineers</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#studentsTab">Students</button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+                
+                <!-- Hostel Tab -->
+                <div class="tab-pane fade show active" id="hostelTab">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Block & Room</th>
+                                    <th>Issue</th>
+                                    <th>Student</th>
+                                    <th>Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Image</th>
+                                    <th>AI Check</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hostelTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Campus Tab -->
+                <div class="tab-pane fade" id="campusTab">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Room / Lab</th>
+                                    <th>Issue</th>
+                                    <th>Student</th>
+                                    <th>Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Image</th>
+                                    <th>AI Check</th>
+                                </tr>
+                            </thead>
+                            <tbody id="campusTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Engineers Tab -->
+                <div class="tab-pane fade" id="engineersTab">
+                    <h5 class="mb-3 text-secondary">Engineer Profiles</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody id="engineersTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Students Tab -->
+                <div class="tab-pane fade" id="studentsTab">
+                    <h5 class="mb-3 text-secondary">Student Profiles</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Summary Modal -->
+<div class="modal fade" id="aiSummaryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="bi bi-robot"></i> AI Facility Insights</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="aiSummaryBody">
+                <div class="text-center py-5" id="aiLoadingSpinner">
+                    <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+                    <h5>Analyzing campus data...</h5>
+                    <p class="text-muted">Gemini is grouping complaints and summarizing issues.</p>
+                </div>
+                <div id="aiSummaryContent" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API_BASE = (window.location.protocol === 'file:' || (window.location.port !== '3000' && window.location.hostname === '127.0.0.1')) ? 'http://localhost:3000' : '';
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    const aiModal = new bootstrap.Modal(document.getElementById('aiSummaryModal'));
+
+    if (!token || role !== 'Admin') {
+        window.location.href = 'login.html';
+    }
+
+    async function fetchData() {
+        try {
+            // 1. Fetch Complaints
+            const resComplaints = await fetch(API_BASE + '/api/complaints', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const complaints = await resComplaints.json();
+
+            // 2. Fetch Users
+            const resUsers = await fetch(API_BASE + '/api/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const users = await resUsers.json();
+
+            renderStats(complaints, users);
+            renderComplaints(complaints);
+            renderUsers(users);
+
+            // Auto-trigger AI Insights once per session
+            if (!sessionStorage.getItem('aiInsightsShown')) {
+                sessionStorage.setItem('aiInsightsShown', 'true');
+                // Small delay so they see the dashboard load first
+                setTimeout(generateAISummary, 1500);
+            }
+
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    }
+
+    function renderStats(complaints, users) {
+        const resolved = complaints.filter(c => c.status === 'Resolved').length;
+        const pending = complaints.filter(c => c.status === 'Pending').length;
+        
+        document.getElementById('totalUsers').innerText = users.length;
+        document.getElementById('totalComplaints').innerText = complaints.length;
+        document.getElementById('totalSolved').innerText = resolved;
+        document.getElementById('totalPending').innerText = pending;
+    }
+
+    function renderComplaints(complaints) {
+        const hostelBody = document.getElementById('hostelTableBody');
+        const campusBody = document.getElementById('campusTableBody');
+
+        // Grouping logic
+        const groupedComplaints = {};
+        complaints.forEach(c => {
+            const key = `${c.roomNumber}|${c.issueType}|${c.status}`;
+            if (!groupedComplaints[key]) {
+                groupedComplaints[key] = {
+                    ...c,
+                    ids: [c.id],
+                    studentNames: [c.studentName],
+                    count: 1
+                };
+            } else {
+                groupedComplaints[key].ids.push(c.id);
+                if (!groupedComplaints[key].studentNames.includes(c.studentName)) {
+                    groupedComplaints[key].studentNames.push(c.studentName);
+                }
+                groupedComplaints[key].count++;
+                
+                // Keep the highest priority
+                if (c.priority === 'High' && groupedComplaints[key].priority !== 'High') {
+                    groupedComplaints[key].priority = 'High';
+                } else if (c.priority === 'Medium' && groupedComplaints[key].priority === 'Low') {
+                    groupedComplaints[key].priority = 'Medium';
+                }
+            }
+        });
+
+        const groupedArray = Object.values(groupedComplaints);
+
+        const renderRows = (complaintList) => complaintList.map(c => {
+            let aiBadge = `<span class="badge bg-secondary" title="Not Checked">N/A</span>`;
+            if (c.aiIsRelated === true || String(c.aiIsRelated).toLowerCase() === 'true') {
+                aiBadge = `<span class="badge bg-success" title="${c.aiSummary.replace(/"/g, '&quot;')}"><i class="bi bi-check-circle"></i> Verified</span>`;
+            } else if (c.aiIsRelated === false || String(c.aiIsRelated).toLowerCase() === 'false') {
+                aiBadge = `<span class="badge bg-danger" title="${c.aiSummary.replace(/"/g, '&quot;')}"><i class="bi bi-exclamation-triangle"></i> Flagged</span>`;
+            }
+
+            const countBadge = c.count > 1 ? `<span class="badge bg-danger rounded-pill ms-2 shadow-sm">${c.count} Reports</span>` : '';
+            const studentDisplay = c.count > 1 
+                ? `<span data-bs-toggle="tooltip" title="${c.studentNames.join(', ')}">Multiple Students </span><i class="bi bi-info-circle text-muted small"></i>`
+                : c.studentName;
+
+            return `
+            <tr data-ids='${JSON.stringify(c.ids)}'>
+                <td class="fw-bold">${c.roomNumber}</td>
+                <td>${c.issueType} ${countBadge}</td>
+                <td>${studentDisplay}</td>
+                <td><small class="text-muted">${new Date(c.createdAt).toLocaleDateString()}</small></td>
+                <td><span class="badge ${c.priority === 'High' ? 'bg-danger' : c.priority === 'Medium' ? 'bg-warning text-dark' : 'bg-info text-dark'}">${c.priority}</span></td>
+                <td><span class="status-badge ${getStatusClass(c.status)}">${c.status}</span></td>
+                <td>${c.imageUrl ? `<a href="${c.imageUrl}" target="_blank" class="btn btn-sm btn-light border">View</a>` : '-'}</td>
+                <td>${aiBadge}</td>
+            </tr>
+        `}).join('');
+
+        const hostelComplaints = groupedArray.filter(c => c.category === 'Hostel');
+        const campusComplaints = groupedArray.filter(c => c.category !== 'Hostel');
+
+        hostelBody.innerHTML = renderRows(hostelComplaints);
+        campusBody.innerHTML = renderRows(campusComplaints);
+        
+        // Initialize tooltips for the "Multiple Students" text
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    }
+
+    function renderUsers(users) {
+        const engBody = document.getElementById('engineersTable');
+        const stuBody = document.getElementById('studentsTable');
+
+        const engineers = users.filter(u => u.role === 'Engineer');
+        const students = users.filter(u => u.role === 'Student');
+
+        engBody.innerHTML = engineers.map(u => {
+            let domainBadge = '';
+            if (u.domain === 'Hostel') domainBadge = '<span class="badge bg-info text-dark ms-1">Hostel</span>';
+            else if (u.domain === 'Campus') domainBadge = '<span class="badge bg-primary ms-1">Campus</span>';
+            
+            return `
+            <tr>
+                <td><i class="bi bi-person-gear"></i> ${u.username}</td>
+                <td>${u.email}</td>
+                <td><span class="badge bg-warning text-dark">Engineer</span>${domainBadge}</td>
+                <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+            </tr>
+        `}).join('');
+
+        stuBody.innerHTML = students.map(u => `
+            <tr>
+                <td><i class="bi bi-person"></i> ${u.username}</td>
+                <td>${u.email}</td>
+                <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
+    }
+
+    function getStatusClass(status) {
+        if(status === 'Resolved') return 'bg-resolved';
+        if(status === 'Pending') return 'bg-pending';
+        return 'bg-progress';
+    }
+
+    async function generateAISummary() {
+        aiModal.show();
+        document.getElementById('aiLoadingSpinner').style.display = 'block';
+        document.getElementById('aiSummaryContent').style.display = 'none';
+
+        try {
+            const res = await fetch(API_BASE + '/api/complaints/ai-summary', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                document.getElementById('aiSummaryContent').innerHTML = data.summaryHtml;
+            } else {
+                document.getElementById('aiSummaryContent').innerHTML = `<div class="alert alert-danger">${data.error || 'Failed to generate summary.'}</div>`;
+            }
+        } catch (error) {
+            document.getElementById('aiSummaryContent').innerHTML = `<div class="alert alert-danger">Network error occurred.</div>`;
+        } finally {
+            document.getElementById('aiLoadingSpinner').style.display = 'none';
+            document.getElementById('aiSummaryContent').style.display = 'block';
+        }
+    }
+
+    function logout() {
+        localStorage.clear(); sessionStorage.clear();
+        window.location.href = 'index.html';
+    }
+
+    fetchData();
+</script>
+
+<!-- Footer -->
+<footer class="text-center py-4 mt-auto text-muted" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.3);">
+    <p class="mb-0 fw-semibold">&copy; 2026 ClassFix. All Rights Reserved.</p>
+</footer>
+</body>
+</html>

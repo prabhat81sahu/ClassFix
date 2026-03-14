@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ClassFix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Poppins', sans-serif; }
+        .navbar { background: #212529; } /* Dark navbar for Admin */
+        .stat-card { border: none; border-radius: 15px; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .stat-card:hover { transform: translateY(-5px); }
+        .icon-box { font-size: 2rem; opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark px-4 mb-4">
+    <a class="navbar-brand fw-bold" href="#"><i class="bi bi-shield-lock-fill"></i> ClassFix Admin</a>
+    <div class="d-flex align-items-center">
+        <span class="text-white me-3" id="adminName">Admin</span>
+        <button onclick="logout()" class="btn btn-outline-light btn-sm">Logout</button>
+    </div>
+</nav>
+
+<div class="container">
+    <h4 class="fw-bold mb-4">Dashboard Overview</h4>
+
+    <!-- Statistics Row -->
+    <div class="row mb-5" id="statsRow">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-secondary" role="status"></div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold">All Complaints</h5>
+        <button onclick="loadData()" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Issue Type</th>
+                            <th>Location</th>
+                            <th>Reported By</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody id="complaintsTable">
+                        <tr><td colspan="6" class="text-center py-4 text-muted">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const role = localStorage.getItem('role') || sessionStorage.getItem('role');
+    const username = localStorage.getItem('username') || 'Admin';
+
+    // 1. Auth Check
+    if (!token || role !== 'Admin') {
+        window.location.href = 'login.html';
+    }
+    document.getElementById('adminName').innerText = username;
+
+    // 2. Load Data
+    async function loadData() {
+        await Promise.all([fetchStats(), fetchComplaints()]);
+    }
+
+    // 3. Fetch Statistics
+    async function fetchStats() {
+        try {
+            const res = await fetch('/api/complaints/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            // Map DB results (Array of { _id: 'Status', count: N }) to UI
+            const statsMap = { 'Pending': 0, 'In Progress': 0, 'Resolved': 0 };
+            data.forEach(item => { statsMap[item._id] = item.count; });
+
+            const cardsHtml = `
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card bg-danger text-white p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div><h3 class="fw-bold mb-0">${statsMap['Pending']}</h3><small>Pending Issues</small></div>
+                            <i class="bi bi-exclamation-circle icon-box"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card bg-warning text-dark p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div><h3 class="fw-bold mb-0">${statsMap['In Progress']}</h3><small>In Progress</small></div>
+                            <i class="bi bi-tools icon-box"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card bg-success text-white p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div><h3 class="fw-bold mb-0">${statsMap['Resolved']}</h3><small>Resolved</small></div>
+                            <i class="bi bi-check-circle icon-box"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('statsRow').innerHTML = cardsHtml;
+        } catch (error) {
+            console.error("Error loading stats:", error);
+            document.getElementById('statsRow').innerHTML = '<div class="col-12 text-danger">Failed to load statistics.</div>';
+        }
+    }
+
+    // 4. Fetch Complaints List
+    async function fetchComplaints() {
+        try {
+            const res = await fetch('/api/complaints', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const tbody = document.getElementById('complaintsTable');
+            
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No complaints found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(c => `
+                <tr>
+                    <td class="ps-4 fw-bold">${c.issueType}</td>
+                    <td>${c.roomNumber}</td>
+                    <td>${c.studentName}</td>
+                    <td class="text-muted small">${new Date(c.createdAt).toLocaleDateString()}</td>
+                    <td><span class="badge rounded-pill ${getStatusBadge(c.status)}">${c.status}</span></td>
+                    <td><span class="badge ${getPriorityBadge(c.priority)}">${c.priority}</span></td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    function getStatusBadge(status) {
+        if(status === 'Resolved') return 'bg-success';
+        if(status === 'In Progress') return 'bg-warning text-dark';
+        return 'bg-danger';
+    }
+
+    function getPriorityBadge(priority) {
+        if(priority === 'High') return 'text-bg-danger';
+        if(priority === 'Medium') return 'text-bg-warning';
+        return 'text-bg-info';
+    }
+
+    function logout() {
+        localStorage.clear(); sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    // Init
+    loadData();
+</script>
+</body>
+</html>

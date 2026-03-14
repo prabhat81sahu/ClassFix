@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ClassFix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background: linear-gradient(-45deg, #FF9A9E, #FECFEF, #A1C4FD, #C2E9FB); /* Vibrant soft gradient */
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex; flex-direction: column; min-height: 100vh; margin: 0; font-family: 'Poppins', sans-serif; 
+        }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        
+        .split-container { 
+            display: flex; width: 100%; max-width: 950px; 
+            background: rgba(255, 255, 255, 0.4); /* Glassmorphism */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px; 
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1); 
+            overflow: hidden; margin: auto; 
+        }
+        
+        .graphic-side { flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; color: #2C3E50; }
+        .graphic-side img { max-width: 80%; width: 250px; height: auto; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .graphic-side h2 { font-weight: 700; margin-bottom: 10px; }
+        .graphic-side p { font-size: 0.95rem; opacity: 0.8; }
+        
+        .form-side { flex: 1.2; padding: 50px 40px; display: flex; flex-direction: column; justify-content: center; background: rgba(255, 255, 255, 0.7); }
+        .form-control:focus, .form-select:focus { border-color: #764ba2; box-shadow: 0 0 0 0.25rem rgba(118, 75, 162, 0.25); background: white; }
+        .form-control { background: rgba(255,255,255,0.7); }
+        .btn-primary { background: linear-gradient(to right, #667eea 0%, #764ba2 100%); border: none; transition: 0.3s; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3); }
+        
+        /* Moving Background Elements */
+        .shapes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: -1; pointer-events: none; }
+        .shape { position: absolute; background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); bottom: -150px; }
+        .shape-circle { border-radius: 50%; animation: floatUpCircle 15s linear infinite; }
+        .shape-square { border-radius: 10%; animation: floatUpSquare 15s linear infinite; }
+        .shape-triangle { width: 0; height: 0; border-left: 30px solid transparent; border-right: 30px solid transparent; border-bottom: 50px solid rgba(255,255,255,0.2); background: transparent; backdrop-filter: none; animation: floatUpSquare 15s linear infinite; border-top: none; }
+        
+        .shape:nth-child(1) { left: 10%; width: 50px; height: 50px; animation-delay: 0s; animation-duration: 10s; }
+        .shape:nth-child(2) { left: 40%; width: 90px; height: 90px; animation-delay: 2s; animation-duration: 14s; }
+        .shape:nth-child(3) { left: 70%; width: 35px; height: 35px; animation-delay: 4s; animation-duration: 8s; }
+        .shape:nth-child(4) { left: 80%; width: 65px; height: 65px; animation-delay: 1s; animation-duration: 15s; }
+        .shape:nth-child(5) { left: 25%; width: 55px; height: 55px; animation-delay: 3s; animation-duration: 11s; }
+        .shape:nth-child(6) { left: 15%; animation-delay: 1s; animation-duration: 12s; } /* Triangle */
+        .shape:nth-child(7) { left: 85%; width: 45px; height: 45px; animation-delay: 6s; animation-duration: 16s; }
+        .shape:nth-child(8) { left: 55%; animation-delay: 5s; animation-duration: 9s; } /* Triangle */
+        
+        @keyframes floatUpCircle { 0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 0; } 100% { transform: translateY(-800px) rotate(720deg); opacity: 0; border-radius: 50%; } }
+        @keyframes floatUpSquare { 0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 50%; } 100% { transform: translateY(-800px) rotate(360deg); opacity: 0; border-radius: 10%; } }
+        
+        @media (max-width: 768px) { .split-container { flex-direction: column; } .graphic-side { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="shapes">
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-square"></div>
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-square"></div>
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-triangle"></div>
+        <div class="shape shape-square"></div>
+        <div class="shape shape-triangle"></div>
+    </div>
+    
+    <div class="split-container">
+        <div class="graphic-side">
+            <img src="logo.jpg" alt="Class Fix Logo">
+            <h2>Join ClassFix</h2>
+            <p>Become part of the most efficient campus management system.</p>
+        </div>
+        <div class="form-side">
+            <h3 class="text-center fw-bold mb-4" style="color: #2c3e50;">Create Account</h3>
+            <form id="registerForm">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label text-secondary fw-semibold">First Name</label>
+                        <input type="text" name="firstName" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-secondary fw-semibold">Middle Name</label>
+                        <input type="text" name="middleName" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-secondary fw-semibold text-primary">Last Name</label>
+                        <input type="text" name="lastName" class="form-control border-primary" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary fw-semibold text-primary">Username</label>
+                    <input type="text" name="username" class="form-control border-primary" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary fw-semibold">Email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary fw-semibold">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary fw-semibold">Role</label>
+                    <select name="role" id="roleSelect" class="form-select" onchange="toggleAdminCode()">
+                        <option value="Student">Student</option>
+                        <option value="Engineer">Engineer</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="domainGroup" style="display:none;">
+                    <label class="form-label text-secondary fw-semibold">Engineer Specialization Area</label>
+                    <select name="domain" class="form-select">
+                        <option value="Hostel">Hostel Issues Only</option>
+                        <option value="Campus">Campus Issues Only</option>
+                    </select>
+                </div>
+                <div class="mb-4" id="adminCodeGroup" style="display:none;">
+                    <label class="form-label text-danger fw-semibold">Secret Code (Staff Only)</label>
+                    <input type="password" name="adminCode" class="form-control" placeholder="Enter secret code">
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold text-white shadow-sm mt-2">Sign Up</button>
+            </form>
+            <div class="text-center mt-4">
+                <small class="text-muted">Already have an account? <a href="login.html" class="text-decoration-none fw-bold" style="color:#764ba2;">Login</a></small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleAdminCode() {
+            const role = document.getElementById('roleSelect').value;
+            document.getElementById('adminCodeGroup').style.display = (role === 'Student') ? 'none' : 'block';
+            document.getElementById('domainGroup').style.display = (role === 'Engineer') ? 'block' : 'none';
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                // Dynamically use localhost:3000 if opened via file:// or Live Server
+                const apiBase = (window.location.protocol === 'file:' || (window.location.port !== '3000' && window.location.hostname === '127.0.0.1')) ? 'http://localhost:3000' : '';
+
+                const res = await fetch(`${apiBase}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                
+                if (res.ok) {
+                    alert('Registration successful! Please login.');
+                    window.location.href = 'login.html';
+                } else {
+                    alert(result.message || 'Registration failed');
+                }
+            } catch (err) { alert('Error connecting to Server (' + err.message + '). Ensure the backend is running.'); console.error(err); }
+        });
+    </script>
+
+    <!-- Footer -->
+    <footer class="text-center py-3 mt-auto text-muted" style="width: 100%; background: rgba(255,255,255,0.3); backdrop-filter: blur(5px);">
+        <p class="mb-0 fw-semibold fs-6">&copy; 2026 ClassFix. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFix - Welcome</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Layout Modifiers */
+        body { 
+            background: linear-gradient(-45deg, #FF9A9E, #FECFEF, #A1C4FD, #C2E9FB); 
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            margin: 0; 
+            font-family: 'Poppins', sans-serif; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .hero-section {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .hero-card {
+            background: rgba(255, 255, 255, 0.25); /* Glassmorphism */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 50px 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 550px;
+            width: 90%;
+            transform: translateY(0);
+            transition: all 0.4s ease;
+        }
+        .hero-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+        
+        .hero-card img { width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); object-fit: cover; }
+        .hero-title { font-weight: 800; font-size: 2.5rem; color: #2C3E50; letter-spacing: -1px; margin-bottom: 10px; }
+        .hero-subtitle { color: #505c68; font-size: 1.1rem; margin-bottom: 40px; font-weight: 400; }
+        
+        .btn-custom { margin: 10px; width: 160px; font-weight: 600; padding: 12px 0; border-radius: 50px; transition: all 0.3s ease; border: none; }
+        .btn-login { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 8px 15px rgba(118, 75, 162, 0.3); }
+        .btn-login:hover { transform: translateY(-3px); box-shadow: 0 12px 20px rgba(118, 75, 162, 0.5); color: white; }
+        .btn-register { background: white; color: #764ba2; box-shadow: 0 8px 15px rgba(0,0,0,0.05); }
+        .btn-register:hover { transform: translateY(-3px); box-shadow: 0 12px 20px rgba(0,0,0,0.1); background: #fdfdfd; color: #5b3780; }
+
+        .scroll-indicator i.animated-bounce {
+            display: inline-block;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        /* Content Sections */
+        .section-title { font-weight: 800; color: #2C3E50; letter-spacing: -1px; }
+        
+        .glass-stats {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        .stat-box h2 { font-size: 4rem; }
+        
+        .feature-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+        .icon-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        /* Moving Background Elements */
+        .shapes { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: -1; pointer-events: none; }
+        .shape { position: absolute; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); bottom: -150px; }
+        .shape-circle { border-radius: 50%; animation: floatUpCircle 15s linear infinite; }
+        .shape-square { border-radius: 10%; animation: floatUpSquare 15s linear infinite; }
+        .shape-triangle { width: 0; height: 0; border-left: 50px solid transparent; border-right: 50px solid transparent; border-bottom: 80px solid rgba(255,255,255,0.15); background: transparent; backdrop-filter: none; animation: floatUpSquare 15s linear infinite; border-top: none;}
+        
+        .shape:nth-child(1) { left: 10%; width: 80px; height: 80px; animation-delay: 0s; animation-duration: 12s; }
+        .shape:nth-child(2) { left: 30%; width: 120px; height: 120px; animation-delay: 2s; animation-duration: 15s; }
+        .shape:nth-child(3) { left: 60%; width: 60px; height: 60px; animation-delay: 4s; animation-duration: 10s; }
+        .shape:nth-child(4) { left: 80%; width: 150px; height: 150px; animation-delay: 1s; animation-duration: 18s; }
+        .shape:nth-child(5) { left: 45%; width: 90px; height: 90px; animation-delay: 5s; animation-duration: 14s; }
+        .shape:nth-child(6) { left: 20%; animation-delay: 3s; animation-duration: 16s; } /* Triangle */
+        .shape:nth-child(7) { left: 75%; width: 40px; height: 40px; animation-delay: 6s; animation-duration: 9s; }
+        .shape:nth-child(8) { left: 5%; width: 110px; height: 110px; animation-delay: 7s; animation-duration: 20s; }
+        .shape:nth-child(9) { left: 90%; animation-delay: 2s; animation-duration: 12s; } /* Triangle */
+        
+        @keyframes floatUpCircle {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 0; }
+            100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 50%; }
+        }
+        @keyframes floatUpSquare {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 50%; }
+            100% { transform: translateY(-1000px) rotate(360deg); opacity: 0; border-radius: 10%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shapes">
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-square"></div>
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-square"></div>
+        <div class="shape shape-triangle"></div>
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-square"></div>
+        <div class="shape shape-triangle"></div>
+    </div>
+    
+    <section class="hero-section">
+        <div class="hero-card">
+            <img src="logo.jpg" alt="ClassFix Logo">
+            <h1 class="hero-title">ClassFix</h1>
+            <p class="hero-subtitle">Streamline your campus maintenance requests and resolve issues with speed and transparency.</p>
+            <div class="d-flex justify-content-center flex-wrap">
+                <a href="login.html" class="btn btn-login btn-custom">Get Started</a>
+                <a href="register.html" class="btn btn-register btn-custom">Create Account</a>
+            </div>
+            
+            <div class="mt-5 scroll-indicator">
+                <p class="text-muted small fw-bold mb-1">Discover More</p>
+                <i class="bi bi-chevron-down fs-4 text-secondary animated-bounce"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Section -->
+    <section class="container my-5 py-5">
+        <div class="row text-center glass-stats g-4">
+            <div class="col-md-6">
+                <div class="stat-box">
+                    <h2 class="display-4 fw-bold text-primary" id="totalComplaints">0</h2>
+                    <p class="text-muted fw-semibold">Total Complaints Submitted</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-box">
+                    <h2 class="display-4 fw-bold text-success" id="resolvedComplaints">0</h2>
+                    <p class="text-muted fw-semibold">Issues Successfully Resolved</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="container my-5 py-5 text-center">
+        <h2 class="section-title mb-5">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="icon-circle shadow-sm mx-auto mb-4 bg-primary text-white">1</div>
+                    <h4>Submit a Request</h4>
+                    <p class="text-muted">Students can easily log in, upload an image, and submit a detailed maintenance request for their room or campus area.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="icon-circle shadow-sm mx-auto mb-4 bg-info text-white">2</div>
+                    <h4>Engineer Assigned</h4>
+                    <p class="text-muted">Administrators monitor the dashboard and specific tasks are tracked by engineers who immediately begin working on a fix.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="icon-circle shadow-sm mx-auto mb-4 bg-success text-white">3</div>
+                    <h4>Issue Resolved</h4>
+                    <p class="text-muted">The engineer marks the problem as resolved. The student receives immediate email notification about the fix.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-muted">
+        <p>&copy; 2026 ClassFix. All Rights Reserved.</p>
+    </footer>
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <script>
+        // Fetch Live Statistics
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/public/stats');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Simple counter animation
+                    animateValue("totalComplaints", 0, data.totalComplaints, 1500);
+                    animateValue("resolvedComplaints", 0, data.resolvedComplaints, 1500);
+                }
+            } catch (err) {
+                console.error('Error fetching statistics:', err);
+                // Fallback to static text if server is offline
+                document.getElementById('totalComplaints').innerText = '-';
+                document.getElementById('resolvedComplaints').innerText = '-';
+            }
+        }
+
+        function animateValue(id, start, end, duration) {
+            if (start === end) {
+                document.getElementById(id).innerHTML = end;
+                return;
+            }
+            let range = end - start;
+            let current = start;
+            let increment = end > start ? 1 : -1;
+            let stepTime = Math.abs(Math.floor(duration / range));
+            let obj = document.getElementById(id);
+            let timer = setInterval(function() {
+                current += increment;
+                obj.innerHTML = current;
+                if (current == end) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        window.onload = fetchStats;
+    </script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Engineer Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Poppins', sans-serif; }
+        .navbar { background: #343a40; }
+        .status-pending { color: #dc3545; font-weight: bold; background: #ffe6e6; padding: 5px 10px; border-radius: 20px; font-size: 0.9em; }
+        .status-progress { color: #b08d00; font-weight: bold; background: #fff8d6; padding: 5px 10px; border-radius: 20px; font-size: 0.9em; }
+        .status-resolved { color: #198754; font-weight: bold; background: #d1e7dd; padding: 5px 10px; border-radius: 20px; font-size: 0.9em; }
+        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 12px; }
+        .stat-card { transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .card-header { background: white; border-bottom: 2px solid #f0f0f0; font-weight: bold; font-size: 1.1em; }
+
+        /* Page Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f4f6f9;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #ddd;
+            border-top-color: #764ba2; /* Theme color */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div id="preloader">
+    <div class="spinner"></div>
+</div>
+
+<nav class="navbar navbar-dark px-4 mb-4">
+    <a class="navbar-brand" href="#"><i class="bi bi-speedometer2"></i> Engineer Dashboard</a>
+    <div>
+        <a href="profile.html" class="btn btn-outline-light btn-sm"><i class="bi bi-person-circle"></i> Profile</a>
+        <button onclick="logout()" class="btn btn-outline-light btn-sm ms-2"><i class="bi bi-box-arrow-right"></i> Logout</button>
+    </div>
+</nav>
+
+<div class="container-fluid px-4">
+    
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card p-3 border-start border-5 border-danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="text-muted">Pending Issues</h6><h2 id="countPending">0</h2></div>
+                    <div class="fs-1 text-danger"><i class="bi bi-exclamation-circle"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card p-3 border-start border-5 border-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="text-muted">In Progress</h6><h2 id="countProgress">0</h2></div>
+                    <div class="fs-1 text-warning"><i class="bi bi-tools"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card p-3 border-start border-5 border-success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="text-muted">Resolved</h6><h2 id="countResolved">0</h2></div>
+                    <div class="fs-1 text-success"><i class="bi bi-check-circle"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complaints Table -->
+    <div class="card">
+        <div class="card-header"><i class="bi bi-list-task"></i> Recent Complaints</div>
+        <div class="card-body">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Room</th>
+                        <th>Issue</th>
+                        <th>Description</th>
+                        <th>Image</th>
+                        <th>Reported By</th>
+                        <th>Reported At</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="complaintTableBody">
+                    <!-- Data loads here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Updating Status -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalComplaintId">
+                <label>New Status:</label>
+                <select id="modalStatus" class="form-select mb-3">
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                </select>
+                <label>Priority:</label>
+                <select id="modalPriority" class="form-select mb-3">
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                </select>
+                <div id="commentSection" style="display:none;">
+                    <label>Resolution Comment:</label>
+                    <textarea id="modalComment" class="form-control"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveStatus()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Auth & Role Check
+    // Hide preloader when page is fully loaded
+    window.onload = function() {
+        const preloader = document.getElementById('preloader');
+        preloader.style.opacity = '0';
+        setTimeout(() => { preloader.style.display = 'none'; }, 500);
+    };
+
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const role = localStorage.getItem('role') || sessionStorage.getItem('role');
+
+    if (!token) {
+        window.location.href = 'login.html';
+    } else if (role === 'Student') {
+        alert('Access Denied. Engineers Only.');
+        window.location.href = 'index.html';
+    }
+
+    let complaintsData = [];
+    const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+
+    // 1. Fetch Data
+    async function loadComplaints() {
+        try {
+            const res = await fetch('/api/complaints', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (res.status === 401 || res.status === 403) {
+                logout(); // Only logout on auth error
+                return;
+            }
+            if (!res.ok) return; // Ignore other server errors (don't crash)
+            
+            complaintsData = await res.json();
+            renderTable();
+            updateStats();
+        } catch (err) {
+            console.error("Connection failed:", err);
+        }
+    }
+
+    // 2. Render Table
+    function renderTable() {
+        const tbody = document.getElementById('complaintTableBody');
+        tbody.innerHTML = '';
+
+        complaintsData.forEach(c => {
+            const row = `
+                <tr>
+                    <td><span class="fw-bold">${c.roomNumber}</span></td>
+                    <td>${c.issueType}</td>
+                    <td>${c.description}</td>
+                    <td>
+                        ${c.imageUrl ? `<a href="${c.imageUrl}" target="_blank" class="btn btn-sm btn-light text-primary"><i class="bi bi-image"></i> View</a>` : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td>${c.studentName}</td>
+                    <td><small>${new Date(c.createdAt).toLocaleString()}</small></td>
+                    <td><span class="badge ${c.priority === 'High' ? 'bg-danger' : c.priority === 'Medium' ? 'bg-warning text-dark' : 'bg-info text-dark'}">${c.priority}</span></td>
+                    <td><span class="${getStatusClass(c.status)}">${c.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="openModal('${c.id}', '${c.status}', '${c.priority}')"><i class="bi bi-pencil"></i> Update</button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    // 3. Helper for CSS classes
+    function getStatusClass(status) {
+        if(status === 'Pending') return 'status-pending';
+        if(status === 'In Progress') return 'status-progress';
+        return 'status-resolved';
+    }
+
+    // 4. Open Modal
+    window.openModal = function(id, currentStatus, currentPriority) {
+        document.getElementById('modalComplaintId').value = id;
+        document.getElementById('modalStatus').value = currentStatus;
+        document.getElementById('modalPriority').value = currentPriority || 'Medium';
+        document.getElementById('modalComment').value = '';
+        
+        toggleCommentBox();
+        statusModal.show();
+    }
+
+    // Show comment box only if Resolved is selected
+    document.getElementById('modalStatus').addEventListener('change', toggleCommentBox);
+
+    function toggleCommentBox() {
+        const status = document.getElementById('modalStatus').value;
+        document.getElementById('commentSection').style.display = (status === 'Resolved') ? 'block' : 'none';
+    }
+
+    // 5. Update Stats
+    function updateStats() {
+        document.getElementById('countPending').innerText = complaintsData.filter(c => c.status === 'Pending').length;
+        document.getElementById('countProgress').innerText = complaintsData.filter(c => c.status === 'In Progress').length;
+        document.getElementById('countResolved').innerText = complaintsData.filter(c => c.status === 'Resolved').length;
+    }
+
+    // 6. SAVE STATUS (The Core Logic)
+    async function saveStatus() {
+        const id = document.getElementById('modalComplaintId').value;
+        const status = document.getElementById('modalStatus').value;
+        const priority = document.getElementById('modalPriority').value;
+        const comment = document.getElementById('modalComment').value;
+
+        try {
+            const response = await fetch(`/api/complaints/${id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }, 
+                body: JSON.stringify({ 
+                    status: status,
+                    priority: priority,
+                    resolutionComment: comment
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                statusModal.hide();
+                loadComplaints(); // Refresh data without page reload
+            } else {
+                alert("Failed to update: " + result.message);
+            }
+        } catch (error) {
+            console.error("Error updating:", error);
+        }
+    }
+
+    function logout() {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    // Initial Load & Auto-Refresh
+    loadComplaints();
+    setInterval(loadComplaints, 10000); // Refresh data every 10 seconds (10000 ms)
+</script>
+</body>
+</html>
