@@ -7,8 +7,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const mongoose = require('mongoose');
+const { Sequelize, DataTypes, Op } = require('sequelize');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { exec } = require('child_process');
+const mysql = require('mysql2/promise');
+const { URL } = require('url');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,45 +23,57 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'MISSING_KEY'
 app.use(cors());
 app.use(express.json()); // CRITICAL: Allows server to read JSON body
 app.use(express.urlencoded({ extended: true }));
+
 app.use(express.static('public')); // Serve HTML files
 
+// --- FIX: Serve HTML files from the root directory ---
+// Allows the server to find admin.html, login.html, etc., located outside the public folder
+app.get('/:page.html', (req, res, next) => {
+    res.sendFile(path.join(__dirname, `${req.params.page}.html`), err => {
+        if (err) next(); // Pass to the 404 error handler if the file doesn't exist
+    });
+});
+
 // --- MULTER SETUP FOR IMAGE UPLOADS ---
-// Store files in memory (Buffer) to save into MongoDB (Buffer type)
+// Store files in memory (Buffer) to save into MySQL (BLOB type)
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// --- DATABASE CONNECTION (MongoDB) ---
+// --- DATABASE CONNECTION (MySQL via Sequelize) ---
+const sequelize = new Sequelize(process.env.MYSQL_URI || 'mysql://root:@localhost:3306/Prabhat_DB', {
+    dialect: 'mysql',
+    logging: false
+});
+
 // --- MODELS ---
-const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    role: { type: String, enum: ['Student', 'Engineer', 'Admin'], default: 'Student' },
-    domain: { type: String, enum: ['Hostel', 'Campus', 'All'], default: 'All' }, // For Engineer Specialization
-    resetPasswordToken: String,
-    resetPasswordExpires: Date,
-    receiveNotifications: { type: Boolean, default: true }
+const User = sequelize.define('User', {
+    username: { type: DataTypes.STRING, allowNull: false, unique: true },
+    firstName: { type: DataTypes.STRING },
+    lastName: { type: DataTypes.STRING },
+    email: { type: DataTypes.STRING, allowNull: false, unique: true },
+    password: { type: DataTypes.STRING, allowNull: false },
+    role: { type: DataTypes.ENUM('Student', 'Engineer', 'Admin'), defaultValue: 'Student' },
+    domain: { type: DataTypes.ENUM('Hostel', 'Campus', 'All'), defaultValue: 'All' },
+    resetPasswordToken: DataTypes.STRING,
+    resetPasswordExpires: DataTypes.DATE,
+    receiveNotifications: { type: DataTypes.BOOLEAN, defaultValue: true }
 }, { timestamps: true });
 
-const User = mongoose.model('User', userSchema);
-
-const complaintSchema = new mongoose.Schema({
-    studentName: String,
-    roomNumber: String,
-    category: { type: String, enum: ['Hostel', 'Campus'], default: 'Campus' },
-    issueType: String, // Dynamic based on category
-    description: String,
-    imageData: Buffer, // Binary data for the image
-    imageMimeType: String,   // Mime type (e.g., image/png)
-    status: { type: String, default: 'Pending' }, // Pending, In Progress, Resolved
-    priority: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
-    resolutionComment: { type: String, default: '' },
-    resolvedAt: Date,
-    aiIsRelated: { type: Boolean, default: null }, // Null=Not checked, True=Related, False=Not related
-    aiSummary: { type: String, default: 'Pending AI Analysis' }
+const Complaint = sequelize.define('Complaint', {
+    studentName: DataTypes.STRING,
+    roomNumber: DataTypes.STRING,
+    category: { type: DataTypes.ENUM('Hostel', 'Campus'), defaultValue: 'Campus' },
+    issueType: DataTypes.STRING,
+    description: DataTypes.TEXT,
+    imageData: DataTypes.BLOB('long'),
+    imageMimeType: DataTypes.STRING,
+    status: { type: DataTypes.STRING, defaultValue: 'Pending' },
+    priority: { type: DataTypes.ENUM('Low', 'Medium', 'High'), defaultValue: 'Medium' },
+    resolutionComment: { type: DataTypes.TEXT, defaultValue: '' },
+    resolvedAt: DataTypes.DATE,
+    aiIsRelated: { type: DataTypes.BOOLEAN, defaultValue: null },
+    aiSummary: { type: DataTypes.STRING, defaultValue: 'Pending AI Analysis' }
 }, { timestamps: true });
-
-const Complaint = mongoose.model('Complaint', complaintSchema);
 
 // --- AUTH MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
@@ -88,17 +103,17 @@ const transporter = nodemailer.createTransport({
 // 0. Auth Routes
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { username, firstName, middleName, lastName, email, password, role, adminCode, domain } = req.body;
+        const { username, firstName, lastName, email, password, role, adminCode, domain } = req.body;
         
         if (!username || !email || !password || !role) {
             return res.status(400).json({ message: 'Username, email, password, and role are required' });
         }
         // Check for existing user/email
-        const usernameExists = await User.findOne({ username });
+        const usernameExists = await User.findOne({ where: { username } });
         if (usernameExists) {
             return res.status(409).json({ message: "Username already taken" });
         }
-        const emailExists = await User.findOne({ email });
+        const emailExists = await User.findOne({ where: { email } });
         if (emailExists) {
             return res.status(409).json({ message: "Email is already registered" });
         }
@@ -112,7 +127,7 @@ app.post('/api/auth/register', async (req, res) => {
         const finalDomain = (role === 'Engineer' && domain) ? domain : 'All';
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        await User.create({ username, email, password: hashedPassword, role, domain: finalDomain });
+        await User.create({ username, firstName, lastName, email, password: hashedPassword, role, domain: finalDomain });
         res.status(201).json({ message: "User registered successfully" });
     } catch (error) {
         res.status(500).json({ message: "Registration failed", details: error.message });
@@ -129,7 +144,7 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(400).json({ message: "Please enter both username and password" });
         }
 
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ where: { username } });
 
         if (!user) {
             console.log("Login Failed: User not found in database."); // Debug Log
@@ -151,8 +166,17 @@ app.post('/api/auth/login', async (req, res) => {
         }
 
         console.log("Login Successful!"); // Debug Log
-        const token = jwt.sign({ id: user.id, role: user.role, name: user.username, domain: user.domain || 'All' }, JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token, role: user.role, username: user.username, domain: user.domain });
+        // Use full name if available, otherwise fallback to username
+        const displayName = (user.firstName && user.lastName) ? `${user.firstName} ${user.lastName}` : user.username;
+        const tokenPayload = { 
+            id: user.id, 
+            role: user.role, 
+            name: user.username, // Keep username for internal linking
+            displayName: displayName, // Add displayName for UI
+            domain: user.domain || 'All' 
+        };
+        const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '1h' });
+        res.json({ token, role: user.role, username: user.username, displayName: displayName, domain: user.domain });
     } catch (error) {
         console.error("Login Error:", error);
         // Fix: Use 'message' key so frontend displays it correctly
@@ -164,7 +188,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/auth/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ where: { email } });
         if (!user) return res.status(404).json({ message: "User with this email does not exist" });
 
         // Generate Token
@@ -198,8 +222,10 @@ app.post('/api/auth/reset-password', async (req, res) => {
     try {
         const { token, newPassword } = req.body;
         const user = await User.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() }
+            where: {
+                resetPasswordToken: token,
+                resetPasswordExpires: { [Op.gt]: new Date() }
+            }
         });
 
         if (!user) return res.status(400).json({ message: "Password reset token is invalid or has expired" });
@@ -225,7 +251,7 @@ app.put('/api/users/change-password', authenticateToken, async (req, res) => {
             return res.status(400).json({ message: "Please provide both current and new passwords." });
         }
 
-        const user = await User.findById(userId);
+        const user = await User.findByPk(userId);
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
@@ -250,7 +276,9 @@ app.put('/api/users/change-password', authenticateToken, async (req, res) => {
 // 5. Get User Profile
 app.get('/api/users/profile', authenticateToken, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('username email role receiveNotifications');
+        const user = await User.findByPk(req.user.id, {
+            attributes: ['username', 'firstName', 'lastName', 'email', 'role', 'receiveNotifications']
+        });
         if (!user) return res.status(404).json({ message: "User not found" }); // Fix: Prevents crash if DB was re-seeded
         res.json(user);
     } catch (error) {
@@ -264,7 +292,7 @@ app.put('/api/users/profile', authenticateToken, async (req, res) => {
         const { receiveNotifications } = req.body;
         const userId = req.user.id;
         
-        await User.findByIdAndUpdate(userId, { receiveNotifications });
+        await User.update({ receiveNotifications }, { where: { id: userId } });
         
         res.json({ success: true, message: "Preferences updated." });
     } catch (error) {
@@ -276,10 +304,34 @@ app.put('/api/users/profile', authenticateToken, async (req, res) => {
 app.get('/api/users', authenticateToken, async (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: "Access Denied" });
     try {
-        const users = await User.find().select('username email role domain receiveNotifications createdAt');
+        const users = await User.findAll({
+            attributes: ['id', 'username', 'firstName', 'lastName', 'email', 'role', 'domain', 'receiveNotifications', 'createdAt']
+        });
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: "Error fetching users" });
+    }
+});
+
+// 6.6. Admin Edit User Password
+app.put('/api/users/:id/admin-edit', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: "Access Denied" });
+    try {
+        const { newPassword } = req.body;
+        const userId = req.params.id;
+        
+        const user = await User.findByPk(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (newPassword) {
+            user.password = await bcrypt.hash(newPassword, 10);
+            await user.save();
+            return res.json({ success: true, message: "User password updated successfully" });
+        }
+        
+        res.status(400).json({ message: "No new password provided" });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating user" });
     }
 });
 
@@ -288,8 +340,8 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 // 0.5. Get Public Site Statistics for Landing Page
 app.get('/api/public/stats', async (req, res) => {
     try {
-        const totalComplaints = await Complaint.countDocuments();
-        const resolvedComplaints = await Complaint.countDocuments({ status: 'Resolved' });
+        const totalComplaints = await Complaint.count();
+        const resolvedComplaints = await Complaint.count({ where: { status: 'Resolved' } });
         res.json({
             totalComplaints: totalComplaints || 0,
             resolvedComplaints: resolvedComplaints || 0
@@ -408,19 +460,18 @@ app.get('/api/complaints', authenticateToken, async (req, res) => {
         }
 
         // Exclude the heavy 'imageData' BLOB from the list for performance
-        const complaints = await Complaint.find(whereClause)
-            .select('-imageData')
-            .sort({ createdAt: -1 });
+        const complaints = await Complaint.findAll({
+            where: whereClause,
+            attributes: { exclude: ['imageData'] },
+            order: [['createdAt', 'DESC']]
+        });
 
         // Add a virtual 'imageUrl' property pointing to the image route
         const results = complaints.map(c => {
-            const json = c.toObject ? c.toObject() : c;
-            // Mongoose object usually has .toJSON() or .toObject().
-            // We need id, so ensure virtuals are used if using .toJSON(), but standard Mongo documents have _id.
-            // Mongoose creates a virtual 'id' by default.
-            json.id = c._id.toString(); // Fix: Ensure ID is a string for frontend compatibility
+            const json = c.get({ plain: true });
+            json.id = json.id.toString(); // Fix: Ensure ID is a string for frontend compatibility
             if (json.imageMimeType) {
-                json.imageUrl = `/api/complaints/${c.id}/image`;
+                json.imageUrl = `/api/complaints/${json.id}/image`;
             }
             return json;
         });
@@ -433,14 +484,26 @@ app.get('/api/complaints', authenticateToken, async (req, res) => {
 // 2.1. Get Complaint Statistics
 app.get('/api/complaints/stats', authenticateToken, async (req, res) => {
     try {
-        const stats = await Complaint.aggregate([
-            {
-                $group: {
-                    _id: "$status",
-                    count: { $sum: 1 }
-                }
-            }
-        ]);
+        let whereClause = {};
+        // Filter stats so Engineers only see their domain, and Students only see their own
+        if (req.user.role === 'Student') {
+            whereClause = { studentName: req.user.name };
+        } else if (req.user.role === 'Engineer' && req.user.domain !== 'All') {
+            whereClause = { category: req.user.domain };
+        }
+
+        const statsData = await Complaint.findAll({
+            where: whereClause,
+            attributes: [
+                'status',
+                [sequelize.fn('COUNT', sequelize.col('status')), 'count']
+            ],
+            group: ['status']
+        });
+        const stats = statsData.map(s => ({
+            _id: s.status,
+            count: parseInt(s.get('count'), 10)
+        }));
         res.json(stats);
     } catch (error) {
         console.error("Error fetching stats:", error);
@@ -462,8 +525,10 @@ app.get('/api/complaints/ai-summary', authenticateToken, async (req, res) => {
         }
 
         // Fetch active complaints (exclude resolved to save tokens and focus on current issues)
-        const complaints = await Complaint.find({ ...whereClause, status: { $ne: 'Resolved' } })
-            .select('roomNumber issueType priority -_id'); // Only grab what AI needs
+        const complaints = await Complaint.findAll({ 
+            where: { ...whereClause, status: { [Op.ne]: 'Resolved' } },
+            attributes: ['roomNumber', 'issueType', 'priority']
+        });
 
         if (complaints.length === 0) {
             return res.json({ summaryHtml: "<div class='alert alert-success'><i class='bi bi-check-circle'></i> No active complaints to summarize at the moment. Great job!</div>" });
@@ -514,7 +579,7 @@ app.get('/api/complaints/ai-summary', authenticateToken, async (req, res) => {
 // 2.5. Get Complaint Image (Serve from DB)
 app.get('/api/complaints/:id/image', async (req, res) => {
     try {
-        const complaint = await Complaint.findById(req.params.id);
+        const complaint = await Complaint.findByPk(req.params.id);
         if (!complaint || !complaint.imageData) {
             return res.status(404).send('Image not found');
         }
@@ -553,10 +618,10 @@ app.put('/api/complaints/batch', authenticateToken, async (req, res) => {
         }
 
         // Perform batch update in DB
-        await Complaint.updateMany({ _id: { $in: ids } }, updateData);
+        await Complaint.update(updateData, { where: { id: { [Op.in]: ids } } });
 
         // Fetch the updated complaints to get student names and details for emails
-        const updatedComplaints = await Complaint.find({ _id: { $in: ids } });
+        const updatedComplaints = await Complaint.findAll({ where: { id: { [Op.in]: ids } } });
 
         // --- Send Email Notifications ---
         // Group by user to prevent spamming the same user multiple times if they submitted identical complaints
@@ -571,7 +636,7 @@ app.put('/api/complaints/batch', authenticateToken, async (req, res) => {
         Object.keys(studentsToEmail).forEach(async (studentName) => {
             const complaintsForUser = studentsToEmail[studentName];
             try {
-                const studentUser = await User.findOne({ username: studentName });
+                const studentUser = await User.findOne({ where: { username: studentName } });
                 if (studentUser && studentUser.email && studentUser.receiveNotifications) {
                     // Mention the number of identical reports if > 1
                     const reportCountStr = complaintsForUser.length > 1 ? ` (applicable to ${complaintsForUser.length} reports you submitted)` : '';
@@ -607,7 +672,7 @@ app.put('/api/complaints/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     try {
-        const complaint = await Complaint.findById(id);
+        const complaint = await Complaint.findByPk(id);
         if (!complaint) {
             return res.status(404).json({ message: "Complaint not found" });
         }
@@ -632,7 +697,7 @@ app.put('/api/complaints/:id', authenticateToken, async (req, res) => {
 
         // --- Send Email Notification ---
         try {
-            const studentUser = await User.findOne({ username: complaint.studentName });
+            const studentUser = await User.findOne({ where: { username: complaint.studentName } });
             if (studentUser && studentUser.email && studentUser.receiveNotifications) {
                 const mailOptions = {
                     to: studentUser.email,
@@ -659,15 +724,40 @@ app.put('/api/complaints/:id', authenticateToken, async (req, res) => {
 
 
 // --- START SERVER AFTER DB CONNECTION ---
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/college_db';
+async function initializeApp() {
+    try {
+        // 1. Parse URI and automatically create database if it doesn't exist
+        const uriStr = process.env.MYSQL_URI || 'mysql://root:@localhost:3306/Prabhat_DB';
+        const uri = new URL(uriStr);
+        const databaseName = uri.pathname.replace('/', '');
+        
+        const connection = await mysql.createConnection({
+            host: uri.hostname,
+            port: uri.port || 3306,
+            user: uri.username,
+            password: uri.password
+        });
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${databaseName}\`;`);
+        await connection.end();
 
-mongoose.connect(MONGO_URI)
-    .then(() => {
-        console.log("MongoDB Connected Successfully.");
-        // Start Server only after the database is connected
+        // 2. Sync Models and start server
+        await sequelize.sync();
+        console.log("MySQL Database Synced & Connected Successfully.");
         startServer(PORT);
-    })
-    .catch(err => console.error("Fatal DB Connection Error:", err));
+    } catch (err) {
+        if (err.name === 'SequelizeAccessDeniedError' || err.code === 'ER_ACCESS_DENIED_ERROR' || err.message.includes('Access denied')) {
+            console.error("\n=======================================================");
+            console.error("❌ FATAL ERROR: MySQL Access Denied!");
+            console.error("Your application is using the WRONG password for the 'root' MySQL user.");
+            console.error("Please open your .env file and replace the password in MYSQL_URI with your REAL password.");
+            console.error("=======================================================\n");
+        } else {
+            console.error("Fatal DB Connection Error:", err);
+        }
+    }
+}
+
+initializeApp();
 
 // Dynamic Port Allocation
 function startServer(portToTry) {
@@ -678,6 +768,11 @@ function startServer(portToTry) {
         console.log(`Engineer View: http://localhost:${portToTry}/engineer.html`);
         console.log(`Admin Portal: http://localhost:${portToTry}/admin.html`);
         console.log(`================================\n`);
+
+        // Automatically open the application in the default web browser
+        const url = `http://localhost:${portToTry}`;
+        const command = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+        exec(`${command} ${url}`);
     });
 
     server.on('error', (err) => {
